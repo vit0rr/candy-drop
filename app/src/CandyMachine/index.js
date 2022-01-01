@@ -25,11 +25,65 @@ const MAX_SYMBOL_LENGTH = 10;
 const MAX_CREATOR_LEN = 32 + 1 + 1;
 
 const CandyMachine = ({ walletAddress }) => {
+  useEffect(() => {
+    getCandyMachineState();
+  }, []);
+
+  const getProvider = () => {
+    const rpcHost = process.env.REACT_APP_SOLANA_RPC_HOST;
+    // Create a new connection object
+    const connection = new Connection(rpcHost);
+    
+    // Create a new Solana provider object
+    const provider = new Provider(
+      connection,
+      window.solana,
+      opts.preflightCommitment
+    );
+  
+    return provider;
+  };
+
+  const getCandyMachineState = async () => { 
+    const provider = getProvider();
+    
+    // Get metadata about your deployed candy machine program
+    const idl = await Program.fetchIdl(candyMachineProgram, provider);
+  
+    // Create a program that you can call
+    const program = new Program(idl, candyMachineProgram, provider);
+  
+    // Fetch the metadata from your candy machine
+    const candyMachine = await program.account.candyMachine.fetch(
+      process.env.REACT_APP_CANDY_MACHINE_ID
+    );
+    
+    // Parse out all our metadata and log it out
+    const itemsAvailable = candyMachine.data.itemsAvailable.toNumber();
+    const itemsRedeemed = candyMachine.itemsRedeemed.toNumber();
+    const itemsRemaining = itemsAvailable - itemsRedeemed;
+    const goLiveData = candyMachine.data.goLiveDate.toNumber();
+  
+    // We will be using this later in our UI so let's generate this now
+    const goLiveDateTimeString = `${new Date(
+      goLiveData * 1000
+    ).toGMTString()}`
+  
+    console.log({
+      itemsAvailable,
+      itemsRedeemed,
+      itemsRemaining,
+      goLiveData,
+      goLiveDateTimeString,
+    });
+  };
   // Actions
   const fetchHashTable = async (hash, metadataEnabled) => {
     const connection = new web3.Connection(
       process.env.REACT_APP_SOLANA_RPC_HOST
     );
+
+    
 
     const metadataAccounts = await MetadataProgram.getProgramAccounts(
       connection,
@@ -169,8 +223,13 @@ const CandyMachine = ({ walletAddress }) => {
           [],
           1
         ),
-      ];
+      ];	
+    
 
+
+      
+
+      
       const provider = getProvider();
       const idl = await Program.fetchIdl(candyMachineProgram, provider);
       const program = new Program(idl, candyMachineProgram, provider);
@@ -218,6 +277,8 @@ const CandyMachine = ({ walletAddress }) => {
 
       console.warn(message);
     }
+
+    
   };
 
   const createAssociatedTokenAccountInstruction = (
@@ -250,58 +311,6 @@ const CandyMachine = ({ walletAddress }) => {
     });
   };
 
-  useEffect(() => {
-    getCandyMachineState();
-  }, []);
-
-  const getProvider = () => {
-    const rpcHost = process.env.REACT_APP_SOLANA_RPC_HOST;
-    // Create a new connection object
-    const connection = new Connection(rpcHost);
-
-    // Create a new Solana provider object
-    const provider = new Provider(
-      connection,
-      window.solana,
-      opts.preflightCommitment
-    );
-
-    return provider;
-  };
-
-  const getCandyMachineState = async () => { 
-    const provider = getProvider();
-
-    // Get metadata about your deployed candy machine program
-    const idl = await Program.fetchIdl(candyMachineProgram, provider);
-
-    // Create a program that you can call
-    const program = new Program(idl, candyMachineProgram, provider);
-
-    // Fetch the metadata from your candy machine
-    const candyMachine = await program.account.candyMachine.fetch(
-      process.env.REACT_APP_CANDY_MACHINE_ID
-    );
-
-    // Parse out all our metadata and log it out
-    const itemsAvailable = candyMachine.data.itemsAvailable.toNumber();
-    const itemsRedeemed = candyMachine.itemsRedeemed.toNumber();
-    const itemsRemaining = itemsAvailable - itemsRedeemed;
-    const goLiveData = candyMachine.data.goLiveDate.toNumber();
-
-    // We will be using this later in our UI so let's generate this now
-    const goLiveDateTimeString = `${new Date(
-      goLiveData * 1000
-    ).toGMTString()}`
-
-    console.log({
-      itemsAvailable,
-      itemsRedeemed,
-      itemsRemaining,
-      goLiveData,
-      goLiveDateTimeString,
-    });
-  };
   
   return (
     <div className="machine-container">
@@ -311,6 +320,7 @@ const CandyMachine = ({ walletAddress }) => {
         Mint NFT
       </button>
     </div>
+    
   );
 
 };
