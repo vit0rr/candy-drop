@@ -76,6 +76,15 @@ const [mints, setMints] = useState([]);
       goLiveData * 1000
     ).toGMTString()}`
   
+
+    setMachineStats({
+      itemsAvailable,
+      itemsRedeemed,
+      itemsRemaining,
+      goLiveData,
+      goLiveDateTimeString,
+    });
+
     console.log({
       itemsAvailable,
       itemsRedeemed,
@@ -201,7 +210,7 @@ const [mints, setMints] = useState([]);
         rent: web3.SYSVAR_RENT_PUBKEY,
         clock: web3.SYSVAR_CLOCK_PUBKEY,
       };
-
+      
       const signers = [mint];
       const instructions = [
         web3.SystemProgram.createAccount({
@@ -232,7 +241,7 @@ const [mints, setMints] = useState([]);
           [],
           1
         ),
-      ];	
+      ];
     
 
 
@@ -242,7 +251,7 @@ const [mints, setMints] = useState([]);
       const provider = getProvider();
       const idl = await Program.fetchIdl(candyMachineProgram, provider);
       const program = new Program(idl, candyMachineProgram, provider);
-
+      
       const txn = await program.rpc.mintNft({
         accounts,
         signers,
@@ -286,11 +295,12 @@ const [mints, setMints] = useState([]);
         txn,
         async (notification, context) => {
           if (notification.type === 'status') {
-            console.log('Receievd status event');
-
+            console.log('Received status event');
+      
             const { result } = notification;
             if (!result.err) {
               console.log('NFT Minted!');
+              await getCandyMachineState();
             }
           }
         },
