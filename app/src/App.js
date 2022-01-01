@@ -1,12 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import './App.css';
 import twitterLogo from './assets/twitter-logo.svg';
 
-// Constants
 const TWITTER_HANDLE = '_buildspace';
 const TWITTER_LINK = `https://twitter.com/${TWITTER_HANDLE}`;
 
 const App = () => {
+  const [walletAddress, setWalletAddress] = useState(null)
+
   const checkIfWalletIsConnected = async () => {
     try {
       const { solana } = window;
@@ -19,6 +20,7 @@ const App = () => {
             'Connected with Public Key:',
             response.publicKey.toString()
           );
+          setWalletAddress(response.publicKey.toString())
         }
       } else {
         alert('Solana object not found! Get a Phantom Wallet 👻');
@@ -28,16 +30,15 @@ const App = () => {
     }
   };
 
-  /*
-   * Let's define this method so our code doesn't break.
-   * We will write the logic for this next!
-   */
-  const connectWallet = async () => { };
+  const connectWallet = async () => {
+    const {solana} = window
+    if (solana) {
+      const response = await solana.connect()
+      console.log('Connected with Public Key:', response.publicKey.toString())
+      setWalletAddress(response.publicKey.toString())
+    }
+   };
 
-  /*
-   * We want to render this UI when the user hasn't connected
-   * their wallet to our app yet.
-   */
   const renderNotConnectedContainer = () => (
     <button
       className="cta-button connect-wallet-button"
@@ -62,7 +63,7 @@ const App = () => {
           <p className="header">🍭 Candy Drop</p>
           <p className="sub-text">NFT drop machine with fair mint</p>
           {/* Render your connect to wallet button right here */}
-          {renderNotConnectedContainer()}
+          {!walletAddress && renderNotConnectedContainer()}
         </div>
         <div className="footer-container">
           <img alt="Twitter Logo" className="twitter-logo" src={twitterLogo} />
